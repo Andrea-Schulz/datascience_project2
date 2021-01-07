@@ -1,14 +1,18 @@
+###################
+# ETL Pipeline - to run data processing on disaster response message data, execute:
+# 'python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db'
+###################
+
 import sys
-import requests
 import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
     '''
-    load disaster response csv datasets and save as merged pandas dataframe
-    :param messages_filepath: filepath to csv with messages
-    :param categories_filepath: filepath to csv with message categories
-    :return: pandas dataframe
+    load disaster response datasets and save as pandas dataframe
+    :param messages_filepath (str): filepath to .csv file with messages
+    :param categories_filepath (str): filepath to .csv file with message categories
+    :return: df (pandas dataframe): dataframe with merged datasets
     '''
     # load csv datasets
     df_mess = pd.read_csv(messages_filepath)
@@ -22,9 +26,9 @@ def load_data(messages_filepath, categories_filepath):
 
 def clean_data(df):
     '''
-    cleans the raw data in given pandas dataframe
-    :param df: pandas dataframe
-    :return: pandas dataframe with categorical columns and duplicates removed
+    cleans the input data
+    :param df (pandas dataframe): dataframe with uncleaned data
+    :return: df (pandas dataframe): dataframe with categorical columns and duplicates removed
     '''
     ### get categories as categorical columns ###
     # get separate column for each category in df
@@ -39,20 +43,24 @@ def clean_data(df):
     for column in categories:
         categories[column] = categories[column].str.strip().str[-1].astype('int')
 
-    # drop original categories column and append new categorical columns to dataframe
+    # drop original categories column and concat new categorical columns to dataframe
     df = pd.concat([df.drop(['categories'], axis=1), categories], axis=1)
 
     ### drop duplicates ###
     df.drop_duplicates(inplace=True)
+
+    # remove rows where "related" is categorized as '2' (and '2' only): often the messages have no proper translation,
+    # so fitting them to the desired 0/1 encoding would likely distort the dataset
+    df = df[df['related'] != 2]
 
     return df
 
 
 def save_data(df, database_filepath):
     '''
-    loads pandas dataframe into SQLite database
-    :param df: pandas dataframe
-    :param database_filepath: filepath for the SQLite database to upload to
+    saves pandas dataframe as a table in a SQLite database
+    :param df (pandas dataframe): dataframe to be saved and loaded into database
+    :param database_filepath (str): filepath for the SQLite database to upload to
     :return: None
     '''
     engine = create_engine(f'sqlite:///{database_filepath}')
@@ -62,9 +70,7 @@ def save_data(df, database_filepath):
 
 def main():
     '''
-    runs the ETL pipeline (loads and cleans data, saves it into SQLite database - to execute, run
-    'python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db'
-    from the command line
+    run ETL pipeline (load and clean data, save it into SQLite database)
     :return: None
     '''
     if len(sys.argv) == 4:

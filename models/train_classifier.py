@@ -1,24 +1,164 @@
 import sys
-
+import pandas as pd
+from sqlalchemy import create_engine
+import re
+import nltk
+# nltk.download(['punkt', 'wordnet', 'stopwords'])
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+import numpy as np
+from sklearn.datasets import make_multilabel_classification
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
+import pickle
 
 def load_data(database_filepath):
-    pass
+    '''
+    loads pre-processed and cleaned data from a SQLite database
+    :param database_filepath (str): path to the SQLite database
+    :return:
+        X (array): input vector with text messages
+        Y (array): output vector with message categories
+        category_names (list): labels of the output message categories
+    '''
+    # load data from database
+    engine = create_engine(f'sqlite:///{database_filepath}')
+    df = pd.read_sql_table('DisasterResponseMessageData', engine)
+
+    # test functionality on smaller dataset
+    # df = df.head(n=1000)
+
+    # get input/output vectors and output vector labels
+    X = df.message
+    Y = df.drop(['id', 'message', 'original', 'genre'], axis=1)
+    category_names = list(df.columns[4:])
+
+    return X, Y, category_names
 
 
 def tokenize(text):
-    pass
+    '''
+    process a text input in four steps: normalization, tokenization, removing stop words, lemmatization
+    :param text (str): text
+    :return: clean_tokens (list): list of clean tokens
+    '''
+    # normalize and remove special characters
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
+
+    # tokenize text
+    tokens = word_tokenize(text)
+
+    # remove english stop words from tokenized list of words
+    tokens = [w for w in tokens if w not in stopwords.words("english")]
+
+    # lemmatize remaining tokens including verbs
+    lemmatizer = WordNetLemmatizer()
+    lemmed = [lemmatizer.lemmatize(t).strip() for t in tokens]
+    lemmed = [lemmatizer.lemmatize(t, pos='v').strip() for t in lemmed]
+
+    clean_tokens = lemmed
+
+    return clean_tokens
 
 
-def build_model():
-    pass
+def build_model(grid=False):
+    '''
+    builds machine learning pipeline to classify messages into given categories
+    :param grid (bool): whether to use GridSearchCV for parameter optimization
+    :return: model: ML pipeline
+    '''
+    # build ML pipeline with MultiOutputClassifier and tokenize function
+    pipeline = Pipeline([
+        ("vect", CountVectorizer(tokenizer=tokenize)),
+        ("tfidf", TfidfTransformer()),
+        ("clf", MultiOutputClassifier(estimator=RandomForestClassifier()))
+    ])
+
+    # show pipeline parameters
+    # print(pipeline.get_params())
+
+    # use grid search for parameter optimization
+    if grid:
+        parameters = {
+            #      'vect__max_df': 1.0,
+            #      'vect__min_df': 1,
+            #      'vect__ngram_range': (1, 1),
+            #      'tfidf__norm': 'l2',
+            'tfidf__use_idf': (True, False),
+            #      'clf__estimator__bootstrap': True, # bootstrap = method for sampling data points (with or without replacement)
+            #      'clf__estimator__criterion': 'gini',
+            #      'clf__estimator__max_depth': None, # max_depth = max number of levels in each decision tree
+            # 'clf__estimator__max_features': ('auto', 'sqrt'),
+            # max_features = max number of features considered for splitting a node
+            #      'clf__estimator__max_leaf_nodes': None,
+            #      'clf__estimator__min_impurity_decrease': 0.0,
+            #      'clf__estimator__min_impurity_split': None,
+            #      'clf__estimator__min_samples_leaf': 1, # min_samples_leaf = min number of data points allowed in a leaf node
+            #      'clf__estimator__min_samples_split': 2, # min_samples_split = min number of data points placed in a node before the node is split
+            #      'clf__estimator__min_weight_fraction_leaf': 0.0,
+            'clf__estimator__n_estimators': [10, 100]  # n_estimators = number of trees in the foreset
+            #      'clf__estimator__n_jobs': 1,
+            #      'clf__estimator__oob_score': False,
+            #      'clf__estimator__random_state': None,
+            #      'clf__estimator__verbose': 0,
+            #      'clf__n_jobs': 1
+        }
+        model = GridSearchCV(pipeline, param_grid=parameters)
+        print('Model built using GridSearchCV for optimization')
+    else:
+        model = pipeline
+        print('Model built using default pipeline')
+
+    return model
 
 
-def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+def evaluate_model(model, X_test, Y_test, category_names, grid=False):
+    '''
+    runs the prediction on a test dataset and evaluates it against the target values
+    :param model: trained ML model used for prediction
+    :param X_test: test dataset
+    :param Y_test: target values for test dataset
+    :param category_names: labels of the output message categories
+    :return:
+    '''
+    # make prediction
+    Y_pred = model.predict(X_test)
+
+    # display parameters determined by GridSearch
+    if grid:
+        print(f'parameters determined by Gridsearch:\n{model.best_params_}')
+
+    # evaluate prediction against Y_test
+    show_report(category_names, Y_test, Y_pred)
+
+
+def show_report(category_names, Y_test, Y_pred):
+    '''
+    evaluates predicted values against target values using sklearn's classification_report
+    :param category_names: labels of the output message categories
+    :param Y_test: target values for test dataset
+    :param Y_pred: predicted values for test dataset
+    :return: prints classification report for each column in Y
+    '''
+    # show classification report
+    for i in range(len(category_names)):
+        print ('results for category ({}, {}):'.format(i, category_names[i]))
+        # for sklearn < v.0.20.0:
+        rep = classification_report(y_true=np.array(Y_test)[:, i], y_pred=np.array(Y_pred)[:, i])
+        # for sklearn > v.0.20.0:
+        # rep = classification_report(y_true=Y_test[:, i], y_pred=Y_pred[:, i], output_dict=True)
+        print(rep)
 
 
 def save_model(model, model_filepath):
-    pass
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
@@ -29,13 +169,13 @@ def main():
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
         print('Building model...')
-        model = build_model()
+        model = build_model(grid=True)
         
         print('Training model...')
         model.fit(X_train, Y_train)
         
         print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
+        evaluate_model(model, X_test, Y_test, category_names, grid=True)
 
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
