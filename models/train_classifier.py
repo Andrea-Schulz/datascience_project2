@@ -96,31 +96,10 @@ def build_model(grid=False):
     # use grid search for parameter optimization
     if grid:
         parameters = {
-            #      'vect__max_df': 1.0,
-            #      'vect__min_df': 1,
             'vect__ngram_range': ((1, 1), (1, 2)),
-            #      'tfidf__norm': 'l2',
             'tfidf__use_idf': (True, False),
-            #      'clf__estimator__bootstrap': True,
-            # bootstrap = method for sampling data points (with or without replacement)
-            #      'clf__estimator__criterion': 'gini',
-            #      'clf__estimator__max_depth': None, # max_depth = max number of levels in each decision tree
             'clf__estimator__max_features': ('auto', 'sqrt'),
-            # max_features = max number of features considered for splitting a node
-            #      'clf__estimator__max_leaf_nodes': None,
-            #      'clf__estimator__min_impurity_decrease': 0.0,
-            #      'clf__estimator__min_impurity_split': None,
-            #      'clf__estimator__min_samples_leaf': 1,
-            # min_samples_leaf = min number of data points allowed in a leaf node
-            #      'clf__estimator__min_samples_split': 2,
-            # min_samples_split = min number of data points placed in a node before the node is split
-            #      'clf__estimator__min_weight_fraction_leaf': 0.0,
-            'clf__estimator__n_estimators': [10, 20]  # n_estimators = number of trees in the forest
-            #      'clf__estimator__n_jobs': 1,
-            #      'clf__estimator__oob_score': False,
-            #      'clf__estimator__random_state': None,
-            #      'clf__estimator__verbose': 0,
-            #      'clf__n_jobs': 1
+            'clf__estimator__n_estimators': [10, 20]
         }
         model = GridSearchCV(pipeline, param_grid=parameters, cv=3)
         print('Model built using GridSearchCV for optimization')
