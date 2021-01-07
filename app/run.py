@@ -8,7 +8,6 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-# from sklearn.externals import joblib
 import joblib as jb
 from sqlalchemy import create_engine
 
@@ -27,25 +26,42 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('DisasterResponseMessageData', engine)
 
 # load model
-model = jb.load("../models/your_model_name.pkl")
+model = jb.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
 def index():
-    
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+    # genre overview
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
+    # categories overview
+    category_names = list(df.columns[4:])
+    category_sums = df[category_names].sum().sort_values(ascending=False)
+
+    # number of categories the messages are in
+    cat_df = df.drop(['id', 'message', 'original', 'genre'], axis=1)
+    # get number of categories the messages are categorized into
+    cat_number = cat_df.sum(axis=1)
+    # get share of how many messages are categorized into how many categories
+    cat_share = 100 * cat_number.value_counts() / len(cat_number)
+    share = pd.DataFrame({'number_of_categories': cat_share.index, 'messages_share': cat_share})
+    # bin the results
+    share['bins'] = pd.cut(share['number_of_categories'],
+                           bins=[-1, 0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30],
+                           labels=['0 categories', '1 categories', '2 categories', '3 categories',
+                                   '4 categories', '5 categories', '6-10 categories', '11-15 categories',
+                                   '16-20 categories', '21-25 categories', '26-30 categories'])
+    share_bins = share.groupby('bins').sum()['messages_share']
+
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -64,9 +80,42 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+        {
+            'data': [
+                Bar(
+                    y=category_sums,
+                    x=category_sums.index
+                )
+            ],
+
+            'layout': {
+                'title': 'Message Classifications - Classification into Multiple Categories Possible',
+                'yaxis': {
+                    'title': "Number of Messages in Category"
+                },
+                'xaxis': {
+                    'title': "Message Categories",
+                    'tickangle': 45,
+                    'automargin': True
+                }
+            }
+        },
+        {
+            'data': [{
+                'values': share_bins,
+                'labels': share_bins.index,
+                'type': 'pie'
+            }
+            ],
+            'hoverinfo': 'label+percent',
+            'textinfo': 'None',
+            'layout': {
+                'title': 'Number of Assigned Categories per Message'
+            }
         }
     ]
-    
+
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
