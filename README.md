@@ -69,7 +69,7 @@ The project contains 3 main components:
 The largest share of messages comes from the news or finds its way to emergency response organizations via direct channels:
 ![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/genres.JPG?raw=true)
 
-Almost 4 our of 5 messages in the given dataset is classified as "related" and thus relevant for emergeny response workers in general:
+Almost 4 our of 5 messages in the given dataset are classified as "related" and thus relevant for emergeny response workers in general:
 ![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/classifications.JPG?raw=true)
 
 Around 23% of the messages are not assigned to any category and thus not relevant for emergency response:
