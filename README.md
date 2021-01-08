@@ -58,23 +58,22 @@ The project contains 3 main components:
 		* the basic script functionality can be tested on a smaller sample of the dataset by setting 'reduced_dataset=True' when calling the `load_data` function
 2. Run the following command in the app's directory to run your web app.
     `python run.py`
-3. Go to localhost:3001 on your web browser to use the web app
+3. Go to [localhost:3001](localhost:3001) on your web browser to use the web app
 4. Provide a sample text message in the input field at the top of the page and use the Machine Learning pipeline to classify it as shown below. The web app will highlight the matched categories in green:
 
-![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/message_example.jpg?raw=true)
-
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/message_example.JPG?raw=true)
 ## Results <a name="results"></a>
 
 ### Some Brief Thoughts on the Dataset...
 
 The largest share of messages comes from the news or finds its way to emergency response organizations via direct channels:
-![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/genres.jpg?raw=true)
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/genres.JPG?raw=true)
 
 Almost 4 our of 5 messages in the given dataset is classified as "related" and thus relevant for emergeny response workers in general:
-![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/classifications.jpg?raw=true)
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/classifications.JPG?raw=true)
 
 Around 23% of the messages are not assigned to any category and thus not relevant for emergency response:
-![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/category_number.jpg?raw=true)
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/category_number.JPG?raw=true)
 
 ### ... and on the Message Classification
 
@@ -83,8 +82,6 @@ For some categories the share of messages assigned to this category is very larg
 Hence, the the accuracy of the machine learning algorithm becomes distorted, and it is very likely that the classification works better for some message categories than for others.
 
 Check out this [blog](https://machinelearningmastery.com/tactics-to-combat-imbalanced-classes-in-your-machine-learning-dataset/) to learn more about how to tackle imbalanced data in machine learning.
-
-![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/input_message.jpg?raw=true)
 
 ## Licensing, Authors, Acknowledgements<a name="licensing"></a>
 
