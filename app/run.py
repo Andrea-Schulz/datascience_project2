@@ -11,8 +11,8 @@ from plotly.graph_objs import Bar
 import joblib as jb
 from sqlalchemy import create_engine
 
-
 app = Flask(__name__)
+
 
 def tokenize(text):
     tokens = word_tokenize(text)
@@ -24,6 +24,7 @@ def tokenize(text):
         clean_tokens.append(clean_tok)
 
     return clean_tokens
+
 
 # load data
 engine = create_engine('sqlite:///../data/DisasterResponse.db')
@@ -38,6 +39,7 @@ model = jb.load("../models/classifier.pkl")
 @app.route('/index')
 def index():
     # extract data needed for visuals
+
     # genre overview
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
@@ -67,12 +69,13 @@ def index():
             'data': [
                 Bar(
                     x=genre_names,
-                    y=genre_counts
+                    y=genre_counts,
+                    marker={'color': 'rgb(46, 108, 141)'}
                 )
             ],
 
             'layout': {
-                'title': 'Distribution of Message Genres',
+                'title': 'Distribution of Message Genres Across Given Data',
                 'yaxis': {
                     'title': "Count"
                 },
@@ -85,12 +88,13 @@ def index():
             'data': [
                 Bar(
                     y=category_sums,
-                    x=category_sums.index
+                    x=category_sums.index,
+                    marker={'color': 'rgb(87, 144, 175)'}
                 )
             ],
 
             'layout': {
-                'title': 'Message Classifications - Classification into Multiple Categories Possible',
+                'title': 'Message Classifications - Messages can be Assigned to Multiple Categories',
                 'yaxis': {
                     'title': "Number of Messages in Category"
                 },
@@ -105,13 +109,30 @@ def index():
             'data': [{
                 'values': share_bins,
                 'labels': share_bins.index,
-                'type': 'pie'
+                'type': 'pie',
+                'name': 'messages in...',
+                'hoverinfo': 'label+name',
+                'textinfo': 'None',
+                'hole': .4,
+                'marker': {
+                    'colors': [
+                        'rgb(56, 109, 138)',
+                        'rgb(89, 162, 159)',
+                        'rgb(106, 146, 167)',
+                        'rgb(99, 153, 151)',
+                        'rgb(155, 182, 197)',
+                        'rgb(85, 92, 126)',
+                        'rgb(205, 218, 226)',
+                        'rgb(56, 61, 84)',
+                        'rgb(108, 145, 143)',
+                        'rgb(113, 122, 168)',
+                        'rgb(123, 132, 131)'
+                    ]
+                },
             }
             ],
-            'hoverinfo': 'label+percent',
-            'textinfo': 'None',
             'layout': {
-                'title': 'Number of Assigned Categories per Message'
+                'title': 'Number of Categories a Message is Assigned to'
             }
         }
     ]
@@ -119,7 +140,7 @@ def index():
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
-    
+
     # render web page with plotly graphs
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
@@ -128,7 +149,7 @@ def index():
 @app.route('/go')
 def go():
     # save user input in query
-    query = request.args.get('query', '') 
+    query = request.args.get('query', '')
 
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
