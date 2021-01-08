@@ -30,7 +30,7 @@ Repository for Udacity's Data Scientist Nanodegree - Project 2
 ...becoming a Data Scientist, duh. The Data Scientist Nanodegree course contains 4 projects, with the questions of interest differing for each one:
 
 The second project is concerned with ETL and Machine Learning Pipelines, with the main goal to process and categorize relevant communication (text, social media etc.) to be used by disaster response professionals.
-Apart from the respective data processing and ML scripts, this project includes a web app with data visualizations, where an emergency worker can input a new message and get the classification result.
+Apart from the respective data processing and ML scripts, this project includes a web app with data visualizations, where an emergency worker can input a new message and classify it to assess its relevance.
 
 Feel free to check out the Jupyter Notebooks as well, which I used to practice and prepare the final implementation.
 
@@ -44,27 +44,51 @@ The project contains 3 main components:
 	* processes the data from the database using NPL techniques
 	* trains and tunes a model using GridSearchCV
 	* outputs the classification results
-	* saves the model as a pickle file
-* **Flask Web App** for real-time data visualization and input message classification
+	* saves the model as a pickle `.pkl`
+* **Flask Web App** in the `app` directory...
+	* provides a web application with real-time input message classification and visualizations of the datasets used in the pipeline
+	* includes `run.py` script to load the data and model and run the web app locally
 
 
-### Instructions:
-1. Run the following commands in the project's root directory to set up your database and model.
-
-    - To run ETL pipeline that cleans data and stores in database
-        `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db`
-    - To run ML pipeline that trains classifier and saves
-        `python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl`
-
+### Usage:
+1. Run the following commands in the project's root directory to set up your database and model:
+	* **ETL Pipeline** - to run data processing on disaster response message data, execute: `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db`
+	* **ML Pipeline** - to define and train model on the given dataset and save the model as a pickle file, execute: `python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl`
+		* GridSearchCV can be used by setting 'grid=True' in `build_model` and `evaluate_model` functions
+		* the basic script functionality can be tested on a smaller sample of the dataset by setting 'reduced_dataset=True' when calling the `load_data` function
 2. Run the following command in the app's directory to run your web app.
     `python run.py`
+3. Go to localhost:3001 on your web browser to use the web app
+4. Provide a sample text message in the input field at the top of the page and use the Machine Learning pipeline to classify it as shown below. The web app will highlight the matched categories in green:
 
-3. Go to http://0.0.0.0:3001/
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/message_example.jpg?raw=true)
 
+## Results <a name="results"></a>
+
+### Some Brief Thoughts on the Dataset...
+
+The largest share of messages comes from the news or finds its way to emergency response organizations via direct channels:
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/genres.jpg?raw=true)
+
+Almost 4 our of 5 messages in the given dataset is classified as "related" and thus relevant for emergeny response workers in general:
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/classifications.jpg?raw=true)
+
+Around 23% of the messages are not assigned to any category and thus not relevant for emergency response:
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/category_number.jpg?raw=true)
+
+### ... and on the Message Classification
+
+As seen above, the given dataset is very imbalanced, i.e. the classes are represented inequally in the data.
+For some categories the share of messages assigned to this category is very large or small in relation to the dataset as a whole, with some categories (i.e. "child_alone") not having a single message matched to it.
+Hence, the the accuracy of the machine learning algorithm becomes distorted, and it is very likely that the classification works better for some message categories than for others.
+
+Check out this [blog](https://machinelearningmastery.com/tactics-to-combat-imbalanced-classes-in-your-machine-learning-dataset/) to learn more about how to tackle imbalanced data in machine learning.
+
+![alt text](https://github.com/Andrea-Schulz/datascience_project2/blob/master/screenshots/input_message.jpg?raw=true)
 
 ## Licensing, Authors, Acknowledgements<a name="licensing"></a>
 
-Shout out to Figure Eight for providing their pre-sorted disaster response messages data [here](https://appen.com/datasets/combined-disaster-response-data/).
+Shout out to Figure Eight for providing their pre-processed and classified disaster response messages data [here](https://appen.com/datasets/combined-disaster-response-data/).
 
 
 
